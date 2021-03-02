@@ -3,6 +3,7 @@ package com.example.weatherapp
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.app.Dialog
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -26,6 +27,8 @@ import com.karumi.dexter.listener.multi.MultiplePermissionsListener
 import retrofit.*
 
 class MainActivity : AppCompatActivity() {
+
+  private var mProgressDialog : Dialog? = null
 
   private lateinit var mFusedLocationClient: FusedLocationProviderClient
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -99,9 +102,11 @@ class MainActivity : AppCompatActivity() {
       val service: WeatherService = retrofit.create<WeatherService>(WeatherService::class.java)
       val listCall: Call<WeatherResponse> =
         service.getWeather(latitude, longitude, Constants.METRIC_UNIT, ApiKey.APP_ID)
+      showCustomProgressDialog()
       listCall.enqueue(object : Callback<WeatherResponse> {
         override fun onResponse(response: Response<WeatherResponse>?, retrofit: Retrofit?) {
           if (response!!.isSuccess) {
+            hideProgressDialog()
             val weatherList: WeatherResponse = response.body()
             Log.i("Response Result", "$weatherList")
           } else {
@@ -115,6 +120,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onFailure(t: Throwable?) {
+          hideProgressDialog()
           Log.e("Errorrrrrr", t!!.message.toString())
         }
 
@@ -145,5 +151,17 @@ class MainActivity : AppCompatActivity() {
     return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
       LocationManager.NETWORK_PROVIDER
     )
+  }
+
+  private fun showCustomProgressDialog() {
+    mProgressDialog = Dialog(this)
+    mProgressDialog!!.setContentView(R.layout.dialog_custom_progress)
+    mProgressDialog!!.show()
+  }
+
+  private fun hideProgressDialog() {
+    if (mProgressDialog != null) {
+      mProgressDialog!!.dismiss()
+    }
   }
 }
