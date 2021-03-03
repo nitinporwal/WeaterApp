@@ -25,10 +25,13 @@ import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionRequest
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
 import retrofit.*
+import kotlinx.android.synthetic.main.activity_main.*
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
-  private var mProgressDialog : Dialog? = null
+  private var mProgressDialog: Dialog? = null
 
   private lateinit var mFusedLocationClient: FusedLocationProviderClient
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -108,6 +111,7 @@ class MainActivity : AppCompatActivity() {
           if (response!!.isSuccess) {
             hideProgressDialog()
             val weatherList: WeatherResponse = response.body()
+            setupUI(weatherList)
             Log.i("Response Result", "$weatherList")
           } else {
             val rc = response.code()
@@ -163,5 +167,39 @@ class MainActivity : AppCompatActivity() {
     if (mProgressDialog != null) {
       mProgressDialog!!.dismiss()
     }
+  }
+
+  private fun setupUI(weatherList: WeatherResponse) {
+    for (i in weatherList.weather.indices) {
+      Log.i("Weather Name", weatherList.weather.toString())
+      tv_main.text = weatherList.weather[i].main
+      tv_main_description.text = weatherList.weather[i].description
+      tv_temp.text =
+        weatherList.main.temp.toString() + getUnit(application.resources.configuration.locales.toString())
+      tv_humidity.text = weatherList.main.humidity.toString() + " per cent"
+      tv_min.text = weatherList.main.temp_min.toString() + " min"
+      tv_max.text = weatherList.main.temp_max.toString() + " max"
+      tv_speed.text = weatherList.wind.speed.toString()
+      tv_name.text = weatherList.name
+      tv_country.text = weatherList.sys.country
+
+      tv_sunrise_time.text = unixTime(weatherList.sys.sunrise)
+      tv_sunset_time.text = unixTime(weatherList.sys.sunset)
+    }
+  }
+
+  private fun getUnit(valu: String): String {
+    var value = "°C"
+    if ("US" == valu || "LR" == valu || "MM" == valu) {
+      value = "°F"
+    }
+    return value
+  }
+
+  private fun unixTime(timex: Long): String? {
+    val date = Date(timex*1000L)
+    val sdf = SimpleDateFormat("HH:mm", Locale.UK)
+    sdf.timeZone = TimeZone.getDefault()
+    return sdf.format(date)
   }
 }
